@@ -1,4 +1,4 @@
-# An experimental ISO-C++14 header-only Keccak/SHA-3 implementation. (#pragma once is used.)
+# An experimental ISO-C++14* header-only Keccak/SHA-3 implementation.
 ## (Keyed)-Hashing, Single-Pass Authenticated Encryption & Cryptographically Secure Pseudo Random Number Generation - all based on a single implementation of the keccak round function.
 
 ### Resources: 
@@ -21,3 +21,5 @@ Auth. 256-bit encryption	1066 ms		240 MiB/s		4e4b1b67fbbac077
 CSPRNG 128-bit			856 ms		299 MiB/s		0350ba253962eb6a
 
 To compile demo with gcc: g++ -Wall -Wextra -pedantic -O4 -std=c++14 -o demo.exe demo.cpp
+
+* #pragma once is used.
