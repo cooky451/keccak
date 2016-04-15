@@ -1,10 +1,11 @@
-## An experimental ISO-C++14^1 header-only Keccak/SHA-3 implementation.
+## An experimental ISO-C++14<sup>1</sup> header-only Keccak/SHA-3 implementation.
 
 ### (Keyed)-Hashing, Single-Pass Authenticated Encryption & Cryptographically Secure Pseudo Random Number Generation - all based on a single implementation of the Keccak round function.
 
 #### Resources: 
 1. [NIST FIPS 202 / SHA-3 Standard: Permutation-Based Hash and Extendable-Output Functions](http://dx.doi.org/10.6028/NIST.FIPS.202)
-2. [sponge.noekeon.org](http://sponge.noekeon.org), [keccak.noekeon.org](http://keccak.noekeon.org)
+2. [sponge.noekeon.org](http://sponge.noekeon.org)
+4. [keccak.noekeon.org](http://keccak.noekeon.org)
 3. [Cryptographic sponge functions](http://sponge.noekeon.org/CSF-0.1.pdf)
 
 Performance for long messages on an Intel 3570k running at 4.2GH. Compiler: VS 2015
@@ -25,4 +26,4 @@ CSPRNG 128-bit			856 ms		299 MiB/s		0350ba253962eb6a
 
 To compile demo with gcc: g++ -Wall -Wextra -pedantic -O4 -std=c++14 -o demo.exe demo.cpp
 
-^1 #pragma once is used.
+<sup>1</sup> #pragma once is used.
