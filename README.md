@@ -8,11 +8,11 @@
 4. [keccak.noekeon.org](http://keccak.noekeon.org)
 3. [Cryptographic sponge functions](http://sponge.noekeon.org/CSF-0.1.pdf)
 
-Performance for long messages on an Intel 3570k running at 4.2GH. Compiler: VS 2015
-cycles / byte = 4200000000 / (Bandwidth * 1024 * 1024)
- -> ~13 cycles/byte for SHAKE128
-
 ```
+Performance for long messages on an Intel 3570k running at 4.2GH. Compiler: VS 2015
+    cycles / byte = 4200000000 / (Bandwidth * 1024 * 1024)
+        -> ~13 cycles/byte for SHAKE128
+
 Name                            Time            Bandwidth               Hex
 
 SHA3-256                        1025 ms         250 MiB/s               aa2cd13c77453227
