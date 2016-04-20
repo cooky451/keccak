@@ -383,13 +383,6 @@ namespace keccak
 					transform_state(true, dom);
 				}
 
-				if (_bytes_processed == 0 && size == 167)
-				{
-					memory_xor<167>(state_bytes() + _bytes_processed, data);
-					transform_state(is_duplex(), dom);
-					return;
-				}
-
 				while (size > 0)
 				{
 					const auto chunk_size = std::min(size, byte_rate() - _bytes_processed);
