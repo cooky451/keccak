@@ -64,31 +64,6 @@ namespace keccak
 			}
 		}
 
-		template <std::size_t Size>
-		void memory_xor(void* dst, const void* src0, const void* src1)
-		{
-			auto d0 = static_cast<std::uint8_t*>(dst);
-			auto s0 = static_cast<const std::uint8_t*>(src0);
-			auto s1 = static_cast<const std::uint8_t*>(src1);
-
-			for (std::size_t i = 0; i < Size; ++i)
-			{
-				d0[i] = s0[i] ^ s1[i];
-			}
-		}
-
-		template <std::size_t Size>
-		void memory_xor(void* dst, const void* src)
-		{
-			auto dstp = static_cast<std::uint8_t*>(dst);
-			auto srcp = static_cast<const std::uint8_t*>(src);
-
-			for (std::size_t i = 0; i < Size; ++i)
-			{
-				dstp[i] ^= srcp[i];
-			}
-		}
-
 		typedef std::uint64_t lane_type;
 		typedef std::array<std::array<std::uint64_t, 5>, 5> state_type;
 
@@ -395,7 +370,6 @@ namespace keccak
 					{
 						transform_state(is_duplex(), dom);
 					}
-
 				}
 			}
 
