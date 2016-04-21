@@ -4,12 +4,6 @@
 
 ###### The authenticated encryption mode is going to be rewritten to support the new Keyak scheme.
 
-#### Resources: 
-1. [NIST FIPS 202 / SHA-3 Standard: Permutation-Based Hash and Extendable-Output Functions](http://dx.doi.org/10.6028/NIST.FIPS.202)
-2. [sponge.noekeon.org](http://sponge.noekeon.org)
-4. [keccak.noekeon.org](http://keccak.noekeon.org)
-3. [Cryptographic sponge functions](http://sponge.noekeon.org/CSF-0.1.pdf)
-
 ```
 Performance for long messages on an Intel 3570k running at 4.2GH.
     cycles / byte = 4200000000 / (Bandwidth * 1024 * 1024)
@@ -26,6 +20,14 @@ Auth. 256-bit encryption        1066 ms         245 MiB/s               6f4cba86
 CSPRNG 128-bit                  856 ms          310 MiB/s               17b38d3cab452a17
 ```
 
-To compile demo with gcc: g++ -Wall -Wextra -pedantic -O3 -std=c++14 -o demo.exe demo.cpp
-
+To compile demo with gcc use
+```
+g++ -Wall -Wextra -pedantic -O3 -std=c++14 -o demo.exe demo.cpp
+```
 Also works with Visual Studio 2015 and clang.
+
+###### Resources: 
+1. [NIST FIPS 202 / SHA-3 Standard: Permutation-Based Hash and Extendable-Output Functions](http://dx.doi.org/10.6028/NIST.FIPS.202)
+2. [sponge.noekeon.org](http://sponge.noekeon.org)
+4. [keccak.noekeon.org](http://keccak.noekeon.org)
+3. [Cryptographic sponge functions](http://sponge.noekeon.org/CSF-0.1.pdf)
