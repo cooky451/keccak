@@ -12,6 +12,8 @@ namespace keccak
 {
 	namespace detail
 	{
+		// Helper functions
+
 		constexpr unsigned msb_pos(unsigned long long value, unsigned result = 0)
 		{
 			return value <= 1 ? result : msb_pos(value / 2, result + 1);
@@ -41,28 +43,59 @@ namespace keccak
 			return shl(w, amount) | shr(w, std::numeric_limits<Word>::digits - amount);
 		}
 
-		void memory_xor(void* dst, const void* src0, const void* src1, std::size_t size)
+		void memory_xor(void* dest, const void* src0, const void* src1, std::size_t size)
 		{
-			auto d0 = static_cast<std::uint8_t*>(dst);
+			auto d0 = static_cast<std::uint8_t*>(dest);
 			auto s0 = static_cast<const std::uint8_t*>(src0);
 			auto s1 = static_cast<const std::uint8_t*>(src1);
 
+			// Generates perfect SSE code. Don't iterate over pointers!
 			for (std::size_t i = 0; i < size; ++i)
 			{
 				d0[i] = s0[i] ^ s1[i];
 			}
 		}
 
-		void memory_xor(void* dst, const void* src, std::size_t size)
+		void memory_xor(void* dest, const void* src, std::size_t size)
 		{
-			auto dstp = static_cast<std::uint8_t*>(dst);
-			auto srcp = static_cast<const std::uint8_t*>(src);
+			auto d0 = static_cast<std::uint8_t*>(dest);
+			auto s0 = static_cast<const std::uint8_t*>(src);
 
+			// Generates perfect SSE code. Don't iterate over pointers!
 			for (std::size_t i = 0; i < size; ++i)
 			{
-				dstp[i] ^= srcp[i];
+				d0[i] ^= s0[i];
 			}
 		}
+
+		void advance_region(std::size_t)
+		{}
+
+		template <typename... Args>
+		void advance_region(std::size_t amount, void*& ptr, Args&... args);
+
+		template <typename... Args>
+		void advance_region(std::size_t amount, const void*& ptr, Args&... args)
+		{
+			ptr = static_cast<const std::uint8_t*>(ptr) + amount;
+			advance_region(amount, args...);
+		}
+
+		template <typename... Args>
+		void advance_region(std::size_t amount, void*& ptr, Args&... args)
+		{
+			ptr = static_cast<std::uint8_t*>(ptr) + amount;
+			advance_region(amount, args...);
+		}
+
+		template <typename... Args>
+		void advance_region(std::size_t amount, std::size_t& size, Args&... args)
+		{
+			size -= amount;
+			advance_region(amount, args...);
+		}
+
+		// Base types and constants
 
 		typedef std::uint64_t lane_type;
 		typedef std::array<std::array<std::uint64_t, 5>, 5> state_type;
@@ -78,12 +111,6 @@ namespace keccak
 		{
 			encrypt,
 			decrypt,
-		};
-
-		enum class sponge_mode : std::uint8_t
-		{
-			normal, 
-			duplex, 
 		};
 
 		constexpr std::array<std::array<unsigned, 5>, 5> rotation_offsets =
@@ -122,6 +149,8 @@ namespace keccak
 			0x0000000080000001ull,
 			0x8000000080008008ull,
 		};
+
+		// Keccak round function
 
 		void round(state_type& s, lane_type round_constant)
 		{
@@ -321,23 +350,16 @@ namespace keccak
 			state_type _state = {};
 			std::size_t _bytes_processed = 0;
 			capacity _capacity;
-			sponge_mode _mode;
 			bool _squeezing = false;
 
 		public:
-			constexpr sponge(capacity cap, sponge_mode mode)
+			constexpr sponge(capacity cap)
 				: _capacity(cap)
-				, _mode(mode)
 			{}
-
-			constexpr bool is_duplex() const
-			{
-				return _mode == sponge_mode::duplex;
-			}
 
 			constexpr std::size_t byte_rate() const
 			{
-				return _capacity.byte_rate() - is_duplex();
+				return _capacity.byte_rate();
 			}
 
 			const std::uint8_t* state_bytes() const
@@ -355,20 +377,21 @@ namespace keccak
 				if (_squeezing)
 				{
 					_squeezing = false;
-					transform_state(true, dom);
+					pad(dom);
+					transform();
 				}
 
 				while (size > 0)
 				{
 					const auto chunk_size = std::min(size, byte_rate() - _bytes_processed);
 					memory_xor(state_bytes() + _bytes_processed, data, chunk_size);
+
 					_bytes_processed += chunk_size;
-					size -= chunk_size;
-					data = static_cast<const std::uint8_t*>(data) + chunk_size;
+					advance_region(chunk_size, size, data);
 
 					if (_bytes_processed == byte_rate())
 					{
-						transform_state(is_duplex(), dom);
+						transform();
 					}
 				}
 			}
@@ -378,107 +401,229 @@ namespace keccak
 				if (!_squeezing)
 				{
 					_squeezing = true;
-
-					if (!is_duplex() || _bytes_processed != 0)
-					{
-						transform_state(true, dom);
-					}
+					pad(dom);
+					transform();
 				}
 
 				while (size > 0)
 				{
 					if (_bytes_processed == byte_rate())
 					{
-						transform_state(is_duplex(), dom);
+						transform();
 					}
 
 					const auto chunk_size = std::min(size, byte_rate() - _bytes_processed);
 					std::memcpy(buffer, state_bytes() + _bytes_processed, chunk_size);
 
 					_bytes_processed += chunk_size;
-					size -= chunk_size;
-					buffer = static_cast<std::uint8_t*>(buffer) + chunk_size;
+					advance_region(chunk_size, size, buffer);
 				}
 			}
 
-			void transform_state(bool pad_message, domain dom)
+		private:
+			void pad(domain dom)
 			{
-				if (pad_message)
-				{
-					state_bytes()[_bytes_processed] ^= (1u << dom.size()) | dom.value();
-					state_bytes()[_capacity.byte_rate() - 1] ^= 128u;
-				}
-				
+				state_bytes()[_bytes_processed] ^= (1u << dom.size()) | dom.value();
+				state_bytes()[_capacity.byte_rate() - 1] ^= 128u;
+			}
+
+			void transform()
+			{
 				keccak_f(_state);
 				_bytes_processed = 0;
 			}
 		};
 
-		class sponge_wrap
+		class sponge_duplex
 		{
-			static constexpr domain domain_zero = domain::make<0>();
-			static constexpr domain domain_one = domain::make<1>();
-
-			sponge _sponge;
+			state_type _state = {};
+			capacity _capacity;
 
 		public:
-			sponge_wrap(capacity cap, const void* key, std::size_t size)
-				: _sponge(cap, sponge_mode::duplex)
+			constexpr sponge_duplex(capacity cap)
+				: _capacity(cap)
+			{}
+
+			constexpr std::size_t byte_rate() const
 			{
-				auto key_rest = static_cast<const std::uint8_t*>(key) + size / _sponge.byte_rate();
-				_sponge.absorb(key, size / _sponge.byte_rate(), domain_zero);
-				_sponge.absorb(key_rest, size % _sponge.byte_rate(), domain_one);
-				_sponge.transform_state(true, domain_one);
+				return _capacity.byte_rate();
 			}
 
-			void operator () (const void* header, std::size_t header_size,
-				void* buffer, const void* body, std::size_t body_and_buffer_size,
-				void* tag, std::size_t tag_size, cipher_mode mode)
+			const std::uint8_t* state_bytes() const
 			{
-				const auto& duplex_source = mode == cipher_mode::encrypt ? body : buffer;
+				return reinterpret_cast<const std::uint8_t*>(_state[0].data());
+			}
 
-				auto header_rest = static_cast<const std::uint8_t*>(header) + header_size / _sponge.byte_rate();
-				_sponge.absorb(header, header_size / _sponge.byte_rate(), domain_zero);
-				_sponge.absorb(header_rest, header_size % _sponge.byte_rate(), domain_one);
+			std::uint8_t* state_bytes()
+			{
+				return reinterpret_cast<std::uint8_t*>(_state[0].data());
+			}
 
-				while (body_and_buffer_size > _sponge.byte_rate())
-				{
-					memory_xor(buffer, body, _sponge.state_bytes(), _sponge.byte_rate());
-					_sponge.absorb(duplex_source, _sponge.byte_rate(), domain_one);
+			void absorb_transform(const void* data, std::size_t data_size, domain dom)
+			{
+				// assert(_capacity.byte_rate() >= buffer_size);
+				// assert(_capacity.byte_rate() - 1 >= data_size);
 
-					buffer = static_cast<std::uint8_t*>(buffer) + _sponge.byte_rate();
-					body = static_cast<const std::uint8_t*>(body) + _sponge.byte_rate();
-					body_and_buffer_size -= _sponge.byte_rate();
-				}
+				memory_xor(state_bytes(), data, data_size);
 
-				memory_xor(buffer, body, _sponge.state_bytes(), body_and_buffer_size);
-				_sponge.absorb(duplex_source, body_and_buffer_size, domain_zero);
+				state_bytes()[data_size] ^= (1u << dom.size()) | dom.value();
+				state_bytes()[_capacity.byte_rate() - 1] ^= 128u;
 
-				_sponge.squeeze(tag, tag_size, domain_one);
+				keccak_f(_state);
+			}
+
+			void transform()
+			{
+				keccak_f(_state);
 			}
 		};
 
-		constexpr domain sponge_wrap::domain_one;
-		constexpr domain sponge_wrap::domain_zero;
+		class sponge_wrap
+		{
+			sponge_duplex _sponge;
+
+		public:
+			sponge_wrap(capacity cap, const void* key, std::size_t size)
+				: _sponge(cap)
+			{
+				const auto duplex_rate = _sponge.byte_rate() - 1;
+
+				while (size > duplex_rate)
+				{
+					_sponge.absorb_transform(key, size, domain::make<1>());
+					advance_region(duplex_rate, size, key);
+				}
+
+				_sponge.absorb_transform(key, size, domain::make<0>());
+			}
+
+			void wrap(const void* header, std::size_t header_size,
+				void* buffer, const void* body, std::size_t body_and_buffer_size,
+				void* tag, std::size_t tag_size)
+			{
+				wrap_impl(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size, body);
+			}
+
+			void unwrap(const void* header, std::size_t header_size,
+				void* buffer, const void* body, std::size_t body_and_buffer_size,
+				void* tag, std::size_t tag_size)
+			{
+				wrap_impl(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size, buffer);
+			}
+
+		private:
+			void wrap_impl(const void* header, std::size_t header_size,
+				void* buffer, const void* body, std::size_t body_and_buffer_size,
+				void* tag, std::size_t tag_size, const void* duplex_source)
+			{
+				// We need to leave 1 byte for padding, as each block gets
+				// padded, unlike in the normal sponge mode.
+
+				const auto duplex_rate = _sponge.byte_rate() - 1;
+
+				while (header_size > duplex_rate)
+				{
+					_sponge.absorb_transform(header, header_size, domain::make<0>());
+					advance_region(duplex_rate, header_size, header);
+				}
+
+				_sponge.absorb_transform(header, header_size, domain::make<1>());
+
+				while (body_and_buffer_size > duplex_rate)
+				{
+					memory_xor(buffer, body, _sponge.state_bytes(), duplex_rate);
+					_sponge.absorb_transform(duplex_source, duplex_rate, domain::make<0>());
+					advance_region(duplex_rate, body_and_buffer_size, buffer, body);
+				}
+
+				memory_xor(buffer, body, _sponge.state_bytes(), body_and_buffer_size);
+				_sponge.absorb_transform(duplex_source, body_and_buffer_size, domain::make<0>());
+
+				while (tag_size > _sponge.byte_rate()) // We can use the full rate as output.
+				{
+					std::memcpy(tag, _sponge.state_bytes(), _sponge.byte_rate());
+					advance_region(_sponge.byte_rate(), tag_size, tag);
+					_sponge.absorb_transform(nullptr, 0, domain::make<0>());
+				}
+
+				std::memcpy(tag, _sponge.state_bytes(), tag_size);
+			}
+		};
 
 		template <std::uint8_t Domain>
 		class sponge_prg
 		{
-			sponge _sponge;
+			state_type _state = {};
+			std::size_t _bytes_processed = 0;
+			capacity _capacity;
+			bool _fetching = false;
 
 		public:
 			constexpr sponge_prg(capacity cap)
-				: _sponge(cap, sponge_mode::duplex)
+				: _capacity(cap)
 			{}
 
 			void feed(const void* data, std::size_t size)
 			{
-				_sponge.absorb(data, size, domain::make<Domain>());
+				if (_fetching)
+				{
+					_fetching = false;
+					pad_and_transform();
+				}
+
+				while (size > 0)
+				{
+					const auto chunk_size = std::min(size, _capacity.byte_rate() - 1 - _bytes_processed);
+					memory_xor(state_bytes() + _bytes_processed, data, chunk_size);
+
+					_bytes_processed += chunk_size;
+					advance_region(chunk_size, size, data);
+
+					if (_bytes_processed == _capacity.byte_rate())
+					{
+						pad_and_transform();
+					}
+				}
 			}
 
 			void fetch(void* buffer, std::size_t size)
 			{
-				_sponge.squeeze(buffer, size, domain::make<Domain>());
+				if (!_fetching)
+				{
+					_fetching = true;
+					pad_and_transform();
+				}
+
+				while (size > 0)
+				{
+					const auto chunk_size = std::min(size, _capacity.byte_rate() - 1 - _bytes_processed);
+					std::memcpy(buffer, state_bytes() + _bytes_processed, chunk_size);
+
+					_bytes_processed += chunk_size;
+					advance_region(chunk_size, size, buffer);
+
+					if (_bytes_processed == _capacity.byte_rate() - 1)
+					{
+						pad_and_transform();
+					}
+				}
+			}
+
+			void pad_and_transform()
+			{
+				static constexpr auto dom = domain::make<Domain>();
+
+				state_bytes()[_bytes_processed] ^= (1u << dom.size()) | dom.value();
+				state_bytes()[_capacity.byte_rate() - 1] ^= 128u;
+
+				_bytes_processed = 0;
+
+				keccak_f(_state);
+			}
+
+			std::uint8_t* state_bytes()
+			{
+				return reinterpret_cast<std::uint8_t*>(_state[0].data());
 			}
 		};
 
@@ -492,8 +637,6 @@ namespace keccak
 			static constexpr std::size_t capacity = std::max(collision_resistance * 2, preimage_resistance * 2);
 			static constexpr std::size_t hash_size = std::max(collision_resistance * 2 / 8, preimage_resistance / 8);
 
-			static constexpr domain dom = domain::make<Domain>();
-
 			typedef std::array<std::uint8_t, hash_size> hash_type;
 
 		private:
@@ -501,7 +644,7 @@ namespace keccak
 
 		public:
 			constexpr basic_hasher()
-				: _sponge(capacity::make<capacity>(), sponge_mode::normal)
+				: _sponge(capacity::make<capacity>())
 			{}
 
 			basic_hasher(const void* data, std::size_t size)
@@ -512,12 +655,12 @@ namespace keccak
 
 			void update(const void* data, std::size_t size)
 			{
-				_sponge.absorb(data, size, dom);
+				_sponge.absorb(data, size, domain::make<Domain>());
 			}
 
 			void finish(void* buf, std::size_t size)
 			{
-				_sponge.squeeze(buf, size, dom);
+				_sponge.squeeze(buf, size, domain::make<Domain>());
 				*this = basic_hasher();
 			}
 
@@ -529,9 +672,6 @@ namespace keccak
 			}
 		};
 
-		template <std::size_t CollisionResistance, std::size_t PreimageResistance, std::uint8_t Domain>
-		constexpr domain basic_hasher<CollisionResistance, PreimageResistance, Domain>::dom;
-
 		template <std::size_t SecurityStrength, cipher_mode Mode>
 		class basic_authenticated_cipher
 		{
@@ -540,18 +680,29 @@ namespace keccak
 			static constexpr std::size_t capacity = security_strength * 2;
 
 		private:
-			sponge_wrap _wrap;
+			sponge_wrap _wrapper;
 
 		public:
 			basic_authenticated_cipher(const void* key, std::size_t key_size)
-				: _wrap(capacity::make<capacity>(), key, key_size)
+				: _wrapper(capacity::make<capacity>(), key, key_size)
 			{}
 
 			void operator () (const void* header, std::size_t header_size,
 				void* buffer, const void* body, std::size_t body_and_buffer_size,
 				void* tag, std::size_t tag_size)
 			{
-				_wrap(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size, Mode);
+				switch (Mode)
+				{
+				default:
+					// assert(false);
+					break;
+				case cipher_mode::encrypt:
+					_wrapper.wrap(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size);
+					break;
+				case cipher_mode::decrypt:
+					_wrapper.unwrap(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size);
+					break;
+				}
 			}
 		};
 

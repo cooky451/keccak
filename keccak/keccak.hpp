@@ -13,7 +13,6 @@ namespace keccak
 	 * static constexpr std::size_t preimage_resistance;
 	 * static constexpr std::size_t capacity;
 	 * static constexpr std::size_t hash_size;
-	 * static constexpr domain dom;
 	 * typedef std::array<std::uint8_t, hash_size> hash_type;
 	 * 
 	 * basic_hasher();
