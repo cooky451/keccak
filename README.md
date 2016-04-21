@@ -27,4 +27,5 @@ CSPRNG 128-bit                  856 ms          310 MiB/s               17b38d3c
 ```
 
 To compile demo with gcc: g++ -Wall -Wextra -pedantic -O3 -std=c++14 -o demo.exe demo.cpp
+
 Also works with Visual Studio 2015 and clang.
