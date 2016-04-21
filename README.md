@@ -8,6 +8,8 @@
 4. [keccak.noekeon.org](http://keccak.noekeon.org)
 3. [Cryptographic sponge functions](http://sponge.noekeon.org/CSF-0.1.pdf)
 
+###### The authenticated encryption mode is going to be rewritten to support the new Keyak scheme.
+
 ```
 Performance for long messages on an Intel 3570k running at 4.2GH.
     cycles / byte = 4200000000 / (Bandwidth * 1024 * 1024)
