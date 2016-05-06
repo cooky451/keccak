@@ -26,7 +26,7 @@ g++ -Wall -Wextra -pedantic -O3 -std=c++14 -o demo.exe demo.cpp
 ```
 Also works with Visual Studio 2015 and clang.
 
-###### Resources: 
+###### References
 1. [NIST FIPS 202 / SHA-3 Standard: Permutation-Based Hash and Extendable-Output Functions](http://dx.doi.org/10.6028/NIST.FIPS.202)
 2. [sponge.noekeon.org](http://sponge.noekeon.org)
 4. [keccak.noekeon.org](http://keccak.noekeon.org)

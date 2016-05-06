@@ -579,7 +579,7 @@ namespace keccak
 					_bytes_processed += chunk_size;
 					advance_region(chunk_size, size, data);
 
-					if (_bytes_processed == _capacity.byte_rate())
+					if (_bytes_processed == _capacity.byte_rate() - 1)
 					{
 						pad_and_transform();
 					}
