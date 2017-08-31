@@ -1,4 +1,28 @@
-#pragma once
+/* 
+ * Copyright (c) 2017 cooky451
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
+ */
+
+#ifndef KECCAK_DETAIL_36959711
+#define KECCAK_DETAIL_36959711
 
 #include <cassert>
 #include <cstddef>
@@ -12,7 +36,8 @@ namespace keccak
 {
 	namespace detail
 	{
-		// Helper functions
+		/* Helper functions
+		 */
 
 		constexpr unsigned msb_pos(unsigned long long value, unsigned result = 0)
 		{
@@ -45,9 +70,9 @@ namespace keccak
 
 		void memory_xor(void* dest, const void* src0, const void* src1, std::size_t size)
 		{
-			auto d0 = static_cast<std::uint8_t*>(dest);
-			auto s0 = static_cast<const std::uint8_t*>(src0);
-			auto s1 = static_cast<const std::uint8_t*>(src1);
+			const auto d0 = static_cast<std::uint8_t*>(dest);
+			const auto s0 = static_cast<const std::uint8_t*>(src0);
+			const auto s1 = static_cast<const std::uint8_t*>(src1);
 
 			// Generates perfect SSE code. Don't iterate over pointers!
 			for (std::size_t i = 0; i < size; ++i)
@@ -58,8 +83,8 @@ namespace keccak
 
 		void memory_xor(void* dest, const void* src, std::size_t size)
 		{
-			auto d0 = static_cast<std::uint8_t*>(dest);
-			auto s0 = static_cast<const std::uint8_t*>(src);
+			const auto d0 = static_cast<std::uint8_t*>(dest);
+			const auto s0 = static_cast<const std::uint8_t*>(src);
 
 			// Generates perfect SSE code. Don't iterate over pointers!
 			for (std::size_t i = 0; i < size; ++i)
@@ -95,17 +120,19 @@ namespace keccak
 			advance_region(amount, args...);
 		}
 
-		// Base types and constants
+		/* Base types and constants
+		 */
 
-		typedef std::uint64_t lane_type;
-		typedef std::array<std::array<std::uint64_t, 5>, 5> state_type;
+		using lane_type = std::uint64_t;
+		using state_type = std::array<std::array<std::uint64_t, 5>, 5>;
 
 		static_assert(sizeof(state_type) == sizeof(lane_type) * 25, "std::array has padding.");
 		static_assert(std::is_same<unsigned char, std::uint8_t>::value
 			|| std::is_same<char, std::uint8_t>::value, 
 			"std::uint8_t isn't char-type and therefore not exempt from strict aliasing.");
 
-		constexpr std::size_t n_rounds = 12 + 2 * msb_pos(std::numeric_limits<lane_type>::digits);
+		constexpr std::size_t n_rounds =
+			12 + 2 * msb_pos(std::numeric_limits<lane_type>::digits);
 
 		enum class cipher_mode : std::uint8_t
 		{
@@ -150,21 +177,22 @@ namespace keccak
 			0x8000000080008008ull,
 		};
 
-		// Keccak round function
+		/* Keccak round function
+		 */
 
 		void round(state_type& s, lane_type round_constant)
 		{
-			auto c0 = s[0][0] ^ s[1][0] ^ s[2][0] ^ s[3][0] ^ s[4][0];
-			auto c1 = s[0][1] ^ s[1][1] ^ s[2][1] ^ s[3][1] ^ s[4][1];
-			auto c2 = s[0][2] ^ s[1][2] ^ s[2][2] ^ s[3][2] ^ s[4][2];
-			auto c3 = s[0][3] ^ s[1][3] ^ s[2][3] ^ s[3][3] ^ s[4][3];
-			auto c4 = s[0][4] ^ s[1][4] ^ s[2][4] ^ s[3][4] ^ s[4][4];
+			const auto c0 = s[0][0] ^ s[1][0] ^ s[2][0] ^ s[3][0] ^ s[4][0];
+			const auto c1 = s[0][1] ^ s[1][1] ^ s[2][1] ^ s[3][1] ^ s[4][1];
+			const auto c2 = s[0][2] ^ s[1][2] ^ s[2][2] ^ s[3][2] ^ s[4][2];
+			const auto c3 = s[0][3] ^ s[1][3] ^ s[2][3] ^ s[3][3] ^ s[4][3];
+			const auto c4 = s[0][4] ^ s[1][4] ^ s[2][4] ^ s[3][4] ^ s[4][4];
 
-			auto d0 = c4 ^ rol(c1, 1);
-			auto d1 = c0 ^ rol(c2, 1);
-			auto d2 = c1 ^ rol(c3, 1);
-			auto d3 = c2 ^ rol(c4, 1);
-			auto d4 = c3 ^ rol(c0, 1);
+			const auto d0 = c4 ^ rol(c1, 1);
+			const auto d1 = c0 ^ rol(c2, 1);
+			const auto d2 = c1 ^ rol(c3, 1);
+			const auto d3 = c2 ^ rol(c4, 1);
+			const auto d4 = c3 ^ rol(c0, 1);
 
 			s[0][0] ^= d0;
 			s[0][1] ^= d1;
@@ -192,31 +220,31 @@ namespace keccak
 			s[4][3] ^= d3;
 			s[4][4] ^= d4;
 
-			auto s00 = rol(s[0][0], rotation_offsets[0][0]);
-			auto s20 = rol(s[0][1], rotation_offsets[0][1]);
-			auto s40 = rol(s[0][2], rotation_offsets[0][2]);
-			auto s10 = rol(s[0][3], rotation_offsets[0][3]);
-			auto s30 = rol(s[0][4], rotation_offsets[0][4]);
-			auto s31 = rol(s[1][0], rotation_offsets[1][0]);
-			auto s01 = rol(s[1][1], rotation_offsets[1][1]);
-			auto s21 = rol(s[1][2], rotation_offsets[1][2]);
-			auto s41 = rol(s[1][3], rotation_offsets[1][3]);
-			auto s11 = rol(s[1][4], rotation_offsets[1][4]);
-			auto s12 = rol(s[2][0], rotation_offsets[2][0]);
-			auto s32 = rol(s[2][1], rotation_offsets[2][1]);
-			auto s02 = rol(s[2][2], rotation_offsets[2][2]);
-			auto s22 = rol(s[2][3], rotation_offsets[2][3]);
-			auto s42 = rol(s[2][4], rotation_offsets[2][4]);
-			auto s43 = rol(s[3][0], rotation_offsets[3][0]);
-			auto s13 = rol(s[3][1], rotation_offsets[3][1]);
-			auto s33 = rol(s[3][2], rotation_offsets[3][2]);
-			auto s03 = rol(s[3][3], rotation_offsets[3][3]);
-			auto s23 = rol(s[3][4], rotation_offsets[3][4]);
-			auto s24 = rol(s[4][0], rotation_offsets[4][0]);
-			auto s44 = rol(s[4][1], rotation_offsets[4][1]);
-			auto s14 = rol(s[4][2], rotation_offsets[4][2]);
-			auto s34 = rol(s[4][3], rotation_offsets[4][3]);
-			auto s04 = rol(s[4][4], rotation_offsets[4][4]);
+			const auto s00 = rol(s[0][0], rotation_offsets[0][0]);
+			const auto s20 = rol(s[0][1], rotation_offsets[0][1]);
+			const auto s40 = rol(s[0][2], rotation_offsets[0][2]);
+			const auto s10 = rol(s[0][3], rotation_offsets[0][3]);
+			const auto s30 = rol(s[0][4], rotation_offsets[0][4]);
+			const auto s31 = rol(s[1][0], rotation_offsets[1][0]);
+			const auto s01 = rol(s[1][1], rotation_offsets[1][1]);
+			const auto s21 = rol(s[1][2], rotation_offsets[1][2]);
+			const auto s41 = rol(s[1][3], rotation_offsets[1][3]);
+			const auto s11 = rol(s[1][4], rotation_offsets[1][4]);
+			const auto s12 = rol(s[2][0], rotation_offsets[2][0]);
+			const auto s32 = rol(s[2][1], rotation_offsets[2][1]);
+			const auto s02 = rol(s[2][2], rotation_offsets[2][2]);
+			const auto s22 = rol(s[2][3], rotation_offsets[2][3]);
+			const auto s42 = rol(s[2][4], rotation_offsets[2][4]);
+			const auto s43 = rol(s[3][0], rotation_offsets[3][0]);
+			const auto s13 = rol(s[3][1], rotation_offsets[3][1]);
+			const auto s33 = rol(s[3][2], rotation_offsets[3][2]);
+			const auto s03 = rol(s[3][3], rotation_offsets[3][3]);
+			const auto s23 = rol(s[3][4], rotation_offsets[3][4]);
+			const auto s24 = rol(s[4][0], rotation_offsets[4][0]);
+			const auto s44 = rol(s[4][1], rotation_offsets[4][1]);
+			const auto s14 = rol(s[4][2], rotation_offsets[4][2]);
+			const auto s34 = rol(s[4][3], rotation_offsets[4][3]);
+			const auto s04 = rol(s[4][4], rotation_offsets[4][4]);
 
 			s[0][0] = s00 ^ (~s01 & s02);
 			s[0][1] = s01 ^ (~s02 & s03);
@@ -255,6 +283,9 @@ namespace keccak
 			}
 		}
 
+		/* Classes
+		 */
+
 		class capacity
 		{
 			std::uint8_t _n_bytes;
@@ -267,7 +298,8 @@ namespace keccak
 
 				static_assert(NBits % width() == 0, "Rate / width combination not supported.");
 				static_assert(NBits < 25 * width(), "Capacity too high.");
-				static_assert(sizeof(state_type) < std::numeric_limits<std::uint8_t>::max(), "State too wide.");
+				static_assert(sizeof(state_type) <
+					std::numeric_limits<std::uint8_t>::max(), "State too wide.");
 			}
 
 			constexpr static std::size_t width()
@@ -501,14 +533,18 @@ namespace keccak
 				void* buffer, const void* body, std::size_t body_and_buffer_size,
 				void* tag, std::size_t tag_size)
 			{
-				wrap_impl(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size, body);
+				wrap_impl(header, header_size,
+					buffer, body, body_and_buffer_size,
+					tag, tag_size, body);
 			}
 
 			void unwrap(const void* header, std::size_t header_size,
 				void* buffer, const void* body, std::size_t body_and_buffer_size,
 				void* tag, std::size_t tag_size)
 			{
-				wrap_impl(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size, buffer);
+				wrap_impl(header, header_size,
+					buffer, body, body_and_buffer_size,
+					tag, tag_size, buffer);
 			}
 
 		private:
@@ -537,7 +573,8 @@ namespace keccak
 				}
 
 				memory_xor(buffer, body, _sponge.state_bytes(), body_and_buffer_size);
-				_sponge.absorb_transform(duplex_source, body_and_buffer_size, domain::make<0>());
+				_sponge.absorb_transform(
+					duplex_source, body_and_buffer_size, domain::make<0>());
 
 				while (tag_size > _sponge.byte_rate()) // We can use the full rate as output.
 				{
@@ -573,7 +610,9 @@ namespace keccak
 
 				while (size > 0)
 				{
-					const auto chunk_size = std::min(size, _capacity.byte_rate() - 1 - _bytes_processed);
+					const auto chunk_size =
+						std::min(size, _capacity.byte_rate() - 1 - _bytes_processed);
+
 					memory_xor(state_bytes() + _bytes_processed, data, chunk_size);
 
 					_bytes_processed += chunk_size;
@@ -596,7 +635,9 @@ namespace keccak
 
 				while (size > 0)
 				{
-					const auto chunk_size = std::min(size, _capacity.byte_rate() - 1 - _bytes_processed);
+					const auto chunk_size =
+						std::min(size, _capacity.byte_rate() - 1 - _bytes_processed);
+
 					std::memcpy(buffer, state_bytes() + _bytes_processed, chunk_size);
 
 					_bytes_processed += chunk_size;
@@ -627,15 +668,22 @@ namespace keccak
 			}
 		};
 
-		template <std::size_t CollisionResistance, std::size_t PreimageResistance, std::uint8_t Domain>
+		template <
+			std::size_t CollisionResistance,
+			std::size_t PreimageResistance,
+			std::uint8_t Domain
+		>
 		class basic_hasher
 		{
 		public:
 			static constexpr std::size_t collision_resistance = CollisionResistance;
 			static constexpr std::size_t preimage_resistance = PreimageResistance;
 
-			static constexpr std::size_t capacity = std::max(collision_resistance * 2, preimage_resistance * 2);
-			static constexpr std::size_t hash_size = std::max(collision_resistance * 2 / 8, preimage_resistance / 8);
+			static constexpr std::size_t capacity =
+				std::max(collision_resistance * 2, preimage_resistance * 2);
+
+			static constexpr std::size_t hash_size =
+				std::max(collision_resistance * 2 / 8, preimage_resistance / 8);
 
 			typedef std::array<std::uint8_t, hash_size> hash_type;
 
@@ -697,10 +745,12 @@ namespace keccak
 					// assert(false);
 					break;
 				case cipher_mode::encrypt:
-					_wrapper.wrap(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size);
+					_wrapper.wrap(header, header_size,
+						buffer, body, body_and_buffer_size, tag, tag_size);
 					break;
 				case cipher_mode::decrypt:
-					_wrapper.unwrap(header, header_size, buffer, body, body_and_buffer_size, tag, tag_size);
+					_wrapper.unwrap(header, header_size,
+						buffer, body, body_and_buffer_size, tag, tag_size);
 					break;
 				}
 			}
@@ -731,15 +781,20 @@ namespace keccak
 				_prg.feed(seed, size);
 			}
 
-			void operator () (void* buffer, std::size_t size)
+			void extract(void* buffer, std::size_t size)
 			{
 				_prg.fetch(buffer, size);
+			}
+
+			void operator () (void* buffer, std::size_t size)
+			{
+				extract(buffer, size);
 			}
 
 			result_type operator () ()
 			{
 				result_type r;
-				(*this)(&r, sizeof r);
+				extract(&r, sizeof r);
 				return r;
 			}
 
@@ -755,3 +810,5 @@ namespace keccak
 		};
 	}
 }
+
+#endif

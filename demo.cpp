@@ -1,3 +1,25 @@
+/* 
+ * Copyright (c) 2017 cooky451
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
+ */
 
 #include "keccak/keccak.hpp"
 
@@ -13,12 +35,10 @@
 #include <string>
 #include <type_traits>
 
-template <typename T, typename Rep, typename Period>
-static T float_duration(const std::chrono::duration<Rep, Period>& duration, T mul = T(1))
-{
-	return duration.count() * mul * (T(Period::num) / T(Period::den));
-	static_assert(std::is_floating_point<T>::value, "Can only cast to floating point types.");
-}
+using seconds_f32 = std::chrono::duration<float, std::ratio<1, 1>>;
+using seconds_f64 = std::chrono::duration<double, std::ratio<1, 1>>;
+using milliseconds_f32 = std::chrono::duration<float, std::milli>;
+using milliseconds_f64 = std::chrono::duration<double, std::milli>;
 
 struct hexdump
 {
@@ -52,10 +72,10 @@ static void bench_function(const std::string& description, std::size_t buffer_si
 
 	auto start_time = steady_clock::now();
 	auto buffer = func();
-	auto elapsed = float_duration<double>(steady_clock::now() - start_time);
-	auto bandwidth = buffer_size / (1024.0 * 1024.0) / elapsed;
+	auto elapsed = seconds_f64(steady_clock::now() - start_time);
+	auto bandwidth = buffer_size / (1024.0 * 1024.0) / elapsed.count();
 
-	std::cout << std::round(elapsed * 1000.0) << " ms\t\t";
+	std::cout << std::round(milliseconds_f64(elapsed).count()) << " ms\t\t";
 	std::cout << std::round(bandwidth) << " MiB/s\t\t";
 	std::cout << hexdump{ buffer.data(), 8 } << "\n";
 }
@@ -66,12 +86,23 @@ static void benchmark(std::size_t buffer_size)
 
 	std::string msg(buffer_size, 0x77);
 
-	bench_function("SHA3-256\t\t\t", buffer_size, [&] { return keccak::sha3_256_hasher(msg.data(), msg.size()).finish(); });
-	bench_function("SHA3-512\t\t\t", buffer_size, [&] { return keccak::sha3_512_hasher(msg.data(), msg.size()).finish(); });
-	bench_function("SHAKE128\t\t\t", buffer_size, [&] { return keccak::shake128_hasher(msg.data(), msg.size()).finish(); });
-	bench_function("SHAKE256\t\t\t", buffer_size, [&] { return keccak::shake256_hasher(msg.data(), msg.size()).finish(); });
+	bench_function("SHA3-256\t\t\t", buffer_size, [&] {
+		return keccak::sha3_256_hasher(msg.data(), msg.size()).finish();
+	});
 
-	std::string buf(buffer_size, char());
+	bench_function("SHA3-512\t\t\t", buffer_size, [&] {
+		return keccak::sha3_512_hasher(msg.data(), msg.size()).finish();
+	});
+
+	bench_function("SHAKE128\t\t\t", buffer_size, [&] {
+		return keccak::shake128_hasher(msg.data(), msg.size()).finish();
+	});
+
+	bench_function("SHAKE256\t\t\t", buffer_size, [&] {
+		return keccak::shake256_hasher(msg.data(), msg.size()).finish();
+	});
+
+	std::string buf(buffer_size, char{});
 
 	bench_function("Auth. 128-bit encryption\t", buffer_size, [&] { 
 		keccak::authenticated_encrypter_128 encrypt(msg.data(), 16);
@@ -193,7 +224,7 @@ void random_number_test()
 
 	keccak::random_engine_128 rng(seed.data(), seed.size());
 
-	std::uniform_int_distribution<std::uint32_t> d(min, max);
+	std::uniform_int_distribution<decltype(min)> d(min, max);
 	std::map<std::int32_t, std::uint32_t> m;
 
 	while (iterations--)
