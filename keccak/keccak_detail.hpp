@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2017 cooky451
+ * Copyright (c) 2016 - 2017 cooky451
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,7 @@ namespace keccak
 	namespace detail
 	{
 		/* Helper functions
+		 * 
 		 */
 
 		constexpr unsigned msb_pos(unsigned long long value, unsigned result = 0)
@@ -121,6 +122,7 @@ namespace keccak
 		}
 
 		/* Base types and constants
+		 * 
 		 */
 
 		using lane_type = std::uint64_t;
@@ -178,6 +180,7 @@ namespace keccak
 		};
 
 		/* Keccak round function
+		 * 
 		 */
 
 		void round(state_type& s, lane_type round_constant)
@@ -284,6 +287,7 @@ namespace keccak
 		}
 
 		/* Classes
+		 * 
 		 */
 
 		class capacity
