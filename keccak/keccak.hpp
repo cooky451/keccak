@@ -94,7 +94,7 @@ namespace keccak
 		detail::basic_authenticated_cipher<256, detail::cipher_mode::encrypt>;
 
 	using authenticated_decrypter_256 =
-		detail::basic_authenticated_cipher<256, detail::cipher_mode::encrypt>;
+		detail::basic_authenticated_cipher<256, detail::cipher_mode::decrypt>;
 
 	/* Interface: 
 	 * typedef UIntType result_type;
@@ -116,8 +116,8 @@ namespace keccak
 	 * y = security strength
 	 */
 
-	typedef detail::basic_random_engine<std::uint64_t, 128> random_engine_128;
-	typedef detail::basic_random_engine<std::uint64_t, 256> random_engine_256;
+	using random_engine_128 = detail::basic_random_engine<std::uint64_t, 128>;
+	using random_engine_256 = detail::basic_random_engine<std::uint64_t, 256>;
 }
 
 #endif

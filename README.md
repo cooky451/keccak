@@ -5,17 +5,17 @@
 ```
 Performance for long messages on an Intel 3570k running at 4.2GH.
     cycles / byte = 4200000000 / (Bandwidth * 1024 * 1024)
-        -> ~12.5 cycles/byte for SHAKE128
+        -> ~11 cycles/byte for SHAKE128
 
 Name                            Time            Bandwidth               Hex
 
-SHA3-256                        979 ms          262 MiB/s               aa2cd13c77453227
-SHA3-512                        1825 ms         140 MiB/s               68beb4061162c905
-SHAKE128                        796 ms          322 MiB/s               17bbd7ab3ca76c98
-SHAKE256                        978 ms          262 MiB/s               7dbc83659035340d
-Auth. 128-bit encryption        745 ms          344 MiB/s               2560139c698af784
-Auth. 256-bit encryption        916 ms          280 MiB/s               6f4cba861dbd8173
-CSPRNG 128-bit                  794 ms          323 MiB/s               17b38d3cab452a17
+SHA3-256                        886 ms          289 MiB/s               aa2cd13c77453227
+SHA3-512                        1662 ms         154 MiB/s               68beb4061162c905
+SHAKE128                        718 ms          357 MiB/s               17bbd7ab3ca76c98
+SHAKE256                        877 ms          292 MiB/s               7dbc83659035340d
+Auth. 128-bit encryption        731 ms          350 MiB/s               2560139c698af784
+Auth. 256-bit encryption        900 ms          284 MiB/s               6f4cba861dbd8173
+CSPRNG 128-bit                  785 ms          326 MiB/s               17b38d3cab452a17
 ```
 
 To compile demo with gcc use
