@@ -1,4 +1,4 @@
-#### An ISO-C++17 header-only Keccak/SHA-3 implementation.
+### An ISO-C++17 header-only Keccak/SHA-3 implementation.
 
 ```
 Performance for long messages on an Intel 8700K running at 4.7 GHz.
@@ -20,7 +20,7 @@ g++ -std=c++17 -pedantic -Wall -Wextra -O3 -march=native -o demo.exe demo.cpp
 Also works with Visual Studio 2017. (Use /std:c++latest)
 For clang, compile with -fno-slp-vectorize for best performance. Unfortunately clang's SLP vectorizer is a bit over motivated.
 
-###### (Keyed)-Hashing, Single-Pass Authenticated Encryption & Cryptographically Secure Pseudo Random Number Generation - all based on a single implementation of the Keccak round function. (The authenticated encryption modes are highly experimental and should be treated as such.)
+(Keyed)-Hashing, Single-Pass Authenticated Encryption & Cryptographically Secure Pseudo Random Number Generation - all based on a single implementation of the Keccak round function. (The authenticated encryption modes are highly experimental and should be treated as such.)
 
 ###### References
 1. [NIST FIPS 202 / SHA-3 Standard: Permutation-Based Hash and Extendable-Output Functions](http://dx.doi.org/10.6028/NIST.FIPS.202)
