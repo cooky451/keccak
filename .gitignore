@@ -1,2 +1,5 @@
 /build/
 *.exe
+*.exp
+*.lib
+*.pdb

@@ -1,28 +1,26 @@
-#### An ISO-C++14 header-only Keccak/SHA-3 implementation.
-
-###### (Keyed)-Hashing, Single-Pass Authenticated Encryption & Cryptographically Secure Pseudo Random Number Generation - all based on a single implementation of the Keccak round function. (The authenticated encryption modes are highly experimental and should be treated as such.)
+#### An ISO-C++17 header-only Keccak/SHA-3 implementation.
 
 ```
-Performance for long messages on an Intel 3570k running at 4.2GH.
-    cycles / byte = 4200000000 / (Bandwidth * 1024 * 1024)
-        -> ~11 cycles/byte for SHAKE128
+Performance for long messages on an Intel 8700K running at 4.7 GHz.
+    cycles / byte = 4.7*10^9 / (Bandwidth * 1024^2)
+		-> ~7.6 cycles / byte for SHAKE128
+        -> ~9.5 cycles / byte for SHAKE256
 
-Name                            Time            Bandwidth               Hex
-
-SHA3-256                        886 ms          289 MiB/s               aa2cd13c77453227
-SHA3-512                        1662 ms         154 MiB/s               68beb4061162c905
-SHAKE128                        718 ms          357 MiB/s               17bbd7ab3ca76c98
-SHAKE256                        877 ms          292 MiB/s               7dbc83659035340d
-Auth. 128-bit encryption        731 ms          350 MiB/s               2560139c698af784
-Auth. 256-bit encryption        900 ms          284 MiB/s               6f4cba861dbd8173
-CSPRNG 128-bit                  785 ms          326 MiB/s               17b38d3cab452a17
+Name            Bandwidth       NoOptTag
+SHA3-256        475 MiB/s       29d4562a1e3bfdfe322b6fce6f065782
+SHA3-512        256 MiB/s       96cbeb4de24f8432066fd1c89b6b4126
+SHAKE-128       587 MiB/s       832aed26c0e08b41fa341747b7de85d3
+SHAKE-256       470 MiB/s       28ed66da30aba0d270ed32bbacd4feff
 ```
 
 To compile demo with gcc use
 ```
-g++ -Wall -Wextra -pedantic -O3 -std=c++14 -o demo.exe demo.cpp
+g++ -std=c++17 -pedantic -Wall -Wextra -O3 -march=native -o demo.exe demo.cpp
 ```
-Also works with Visual Studio 2015/2017 and clang.
+Also works with Visual Studio 2017. (Use /std:c++latest)
+For clang, compile with -fno-slp-vectorize for best performance. Unfortunately clang's SLP vectorizer is a bit over motivated.
+
+###### (Keyed)-Hashing, Single-Pass Authenticated Encryption & Cryptographically Secure Pseudo Random Number Generation - all based on a single implementation of the Keccak round function. (The authenticated encryption modes are highly experimental and should be treated as such.)
 
 ###### References
 1. [NIST FIPS 202 / SHA-3 Standard: Permutation-Based Hash and Extendable-Output Functions](http://dx.doi.org/10.6028/NIST.FIPS.202)
