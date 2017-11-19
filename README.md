@@ -3,7 +3,7 @@
 ```
 Performance for long messages on an Intel 8700K running at 4.7 GHz.
     cycles / byte = 4.7*10^9 / (Bandwidth * 1024^2)
-		-> ~7.6 cycles / byte for SHAKE128
+        -> ~7.6 cycles / byte for SHAKE128
         -> ~9.5 cycles / byte for SHAKE256
 
 Name            Bandwidth       NoOptTag
